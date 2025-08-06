@@ -181,6 +181,12 @@
   <button id="closeBtn" class="close-button">❌ Close</button>
 </div>
 
+  <video id="video" autoplay playsinline style="width: 100%; max-height: 300px;"></video>
+<canvas id="canvas" style="display:none;"></canvas>
+
+<button id="captureBtn" onclick="captureText()">📸 Scan Text</button>
+
+
 
 <script>
   function showPage(id) {
@@ -263,24 +269,44 @@
       });
   }
 
-function captureText() {
+let isProcessing = false;
+
+  function captureText() {
+    if (isProcessing) return; // Prevent multiple clicks
+    isProcessing = true;
+
+    const captureBtn = document.getElementById("captureBtn");
+    if (captureBtn) {
+      captureBtn.disabled = true;
+      captureBtn.innerText = "⏳ Processing...";
+    }
+
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
-    canvas.getContext('2d').drawImage(video, 0, 0);
+    const context = canvas.getContext('2d');
+    context.drawImage(video, 0, 0);
 
-    Tesseract.recognize(canvas, 'eng', { logger: m => console.log(m) })
-      .then(({ data: { text } }) => {
-        const cleaned = text.trim().replace(/\s+/g, ' '); // clean extra spaces
-        stopCamera();
+    stopCamera(); // Lock camera right after frame capture
 
-        // Fills the input field with id="encryptText"
-        const textInput = document.getElementById("encryptText");
-        if (textInput) {
-          textInput.value = cleaned;
-        } else {
-          alert("Scanned text:\n" + cleaned);
-        }
-      });
+    Tesseract.recognize(canvas, 'eng', {
+      logger: m => console.log(m)
+    }).then(({ data: { text } }) => {
+      const cleaned = text.trim().replace(/\s+/g, ' ');
+      const textInput = document.getElementById("encryptText");
+      if (textInput) {
+        textInput.value = cleaned;
+      } else {
+        alert("Scanned text:\n" + cleaned);
+      }
+    }).catch(err => {
+      alert("OCR Error: " + err);
+    }).finally(() => {
+      if (captureBtn) {
+        captureBtn.disabled = false;
+        captureBtn.innerText = "📸 Scan Text";
+      }
+      isProcessing = false;
+    });
   }
 
   function stopCamera() {
@@ -295,6 +321,7 @@ function captureText() {
 
 </body>
 </html>
+
 
 
 
