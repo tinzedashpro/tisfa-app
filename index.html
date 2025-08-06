@@ -77,12 +77,62 @@
       color: #00ff88;
       word-wrap: break-word;
     }
+
+      .camera-button {
+    background-color: #4CAF50;
+    color: white;
+    font-size: 1.1rem;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 12px;
+    margin-top: 10px;
+    cursor: pointer;
+  }
+
+  .camera-preview {
+    display: none;
+    position: relative;
+    margin-top: 15px;
+    width: 100%;
+    max-width: 320px;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 2px solid #ddd;
+  }
+
+  video {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  .capture-button, .close-button {
+    position: absolute;
+    bottom: 10px;
+    font-size: 1rem;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+
+  .capture-button {
+    left: 10px;
+    background-color: #2196F3;
+    color: white;
+  }
+
+  .close-button {
+    right: 10px;
+    background-color: #f44336;
+    color: white;
+  }
     @media (max-width: 600px) {
       h1 { font-size: 1.4rem; }
       nav button { font-size: 14px; }
     }
   </style>
-  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.0.2/dist/tesseract.min.js"></script>
+ <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
 
 </head>
 <body>
@@ -120,11 +170,15 @@
   </div>
 </div>
 
-  <div>
-  <button onclick="startCamera()">📸 Scan Text</button>
-  <video id="video" width="100%" autoplay playsinline style="display:none;"></video>
+<!-- Fancy Camera Button -->
+<button id="cameraBtn" class="camera-button">📷 Scan Text</button>
+
+<!-- Video Preview Container -->
+<div id="cameraPreview" class="camera-preview">
+  <video id="video" autoplay playsinline></video>
   <canvas id="canvas" style="display:none;"></canvas>
-  <button onclick="captureText()">📤 Capture & Scan</button>
+  <button id="captureBtn" class="capture-button">📸 Capture</button>
+  <button id="closeBtn" class="close-button">❌ Close</button>
 </div>
 
 
@@ -180,26 +234,33 @@
 </script>
 
  <script>
-  let video = document.getElementById('video');
-  let canvas = document.getElementById('canvas');
+  const video = document.getElementById('video');
+  const canvas = document.getElementById('canvas');
+  const cameraPreview = document.getElementById('cameraPreview');
+  const cameraBtn = document.getElementById('cameraBtn');
+  const captureBtn = document.getElementById('captureBtn');
+  const closeBtn = document.getElementById('closeBtn');
+
+  cameraBtn.onclick = startCamera;
+  captureBtn.onclick = captureText;
+  closeBtn.onclick = stopCamera;
 
   function startCamera() {
-    navigator.mediaDevices.getUserMedia({
-      video: { facingMode: { exact: "environment" } }
-    })
-    .then(stream => {
-      video.srcObject = stream;
-      video.style.display = 'block';
-    })
-    .catch(err => {
-      alert('Back camera not available. Trying default...');
-      navigator.mediaDevices.getUserMedia({ video: true })
-        .then(stream => {
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: { exact: "environment" } } })
+      .then(stream => {
+        video.srcObject = stream;
+        cameraPreview.style.display = 'block';
+      })
+      .catch(err => {
+        console.warn('Back camera failed, using default.', err);
+        return navigator.mediaDevices.getUserMedia({ video: true });
+      })
+      .then(stream => {
+        if (stream) {
           video.srcObject = stream;
-          video.style.display = 'block';
-        })
-        .catch(err => alert('Camera error: ' + err));
-    });
+          cameraPreview.style.display = 'block';
+        }
+      });
   }
 
   function captureText() {
@@ -209,36 +270,32 @@
 
     Tesseract.recognize(canvas, 'eng', { logger: m => console.log(m) })
       .then(({ data: { text } }) => {
+        const cleaned = text.trim();
         stopCamera();
-        const cleanText = text.trim();
 
-        // Detect current page from the path or title
-        const isEncryptPage = window.location.pathname.includes("encrypt") || document.title.includes("Encrypt");
-        const isDecryptPage = window.location.pathname.includes("decrypt") || document.title.includes("Decrypt");
-
-        if (isEncryptPage) {
-          const encryptText = document.getElementById("encryptText");
-          if (encryptText) encryptText.value = cleanText;
-        } else if (isDecryptPage) {
-          const decryptText = document.getElementById("decryptText");
-          if (decryptText) decryptText.value = cleanText;
+        // Smart autofill depending on page
+        if (document.getElementById('encryptInput')) {
+          document.getElementById('encryptInput').value = cleaned;
+        } else if (document.getElementById('decryptInput')) {
+          document.getElementById('decryptInput').value = cleaned;
         } else {
-          alert("Scanned Text:\n" + cleanText);
+          alert("Scanned text: " + cleaned);
         }
       });
   }
 
   function stopCamera() {
-    let stream = video.srcObject;
-    if (stream) {
-      stream.getTracks().forEach(track => track.stop());
+    if (video.srcObject) {
+      video.srcObject.getTracks().forEach(track => track.stop());
     }
-    video.style.display = 'none';
+    video.srcObject = null;
+    cameraPreview.style.display = 'none';
   }
 </script>
 
 
 </body>
 </html>
+
 
 
