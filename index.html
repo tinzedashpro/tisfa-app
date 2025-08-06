@@ -179,58 +179,59 @@
   }
 </script>
 
-  <script>
+ <script>
   let video = document.getElementById('video');
   let canvas = document.getElementById('canvas');
 
-function startCamera() {
-  navigator.mediaDevices.getUserMedia({
-    video: { facingMode: { exact: "environment" } } // force back camera
-  })
-  .then(stream => {
-    video.srcObject = stream;
-    video.style.display = 'block';
-  })
-  .catch(err => {
-    alert('Back camera not available. Trying default camera...');
-    // fallback to any available camera
-    navigator.mediaDevices.getUserMedia({ video: true })
-      .then(stream => {
-        video.srcObject = stream;
-        video.style.display = 'block';
-      })
-      .catch(err => alert('Camera error: ' + err));
-  });
-}
-
+  function startCamera() {
+    navigator.mediaDevices.getUserMedia({
+      video: { facingMode: { exact: "environment" } }
+    })
+    .then(stream => {
+      video.srcObject = stream;
+      video.style.display = 'block';
+    })
+    .catch(err => {
+      alert('Back camera not available. Trying default...');
+      navigator.mediaDevices.getUserMedia({ video: true })
+        .then(stream => {
+          video.srcObject = stream;
+          video.style.display = 'block';
+        })
+        .catch(err => alert('Camera error: ' + err));
+    });
+  }
 
   function captureText() {
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
     canvas.getContext('2d').drawImage(video, 0, 0);
 
-    Tesseract.recognize(
-      canvas,
-      'eng',
-      { logger: m => console.log(m) }
-    ).then(({ data: { text } }) => {
-      alert("Scanned Text:\n" + text.trim());
-      stopCamera();
+    Tesseract.recognize(canvas, 'eng', { logger: m => console.log(m) })
+      .then(({ data: { text } }) => {
+        stopCamera();
+        const cleanText = text.trim();
 
-      // Auto-fill scanned text into encrypt or decrypt form
-      const encryptInput = document.getElementById('encryptInput');
-      const decryptInput = document.getElementById('decryptInput');
+        // Detect current page from the path or title
+        const isEncryptPage = window.location.pathname.includes("encrypt") || document.title.includes("Encrypt");
+        const isDecryptPage = window.location.pathname.includes("decrypt") || document.title.includes("Decrypt");
 
-      if (encryptInput) encryptInput.value = text.trim();
-      if (decryptInput) decryptInput.value = text.trim();
-    });
+        if (isEncryptPage) {
+          const encryptText = document.getElementById("encryptText");
+          if (encryptText) encryptText.value = cleanText;
+        } else if (isDecryptPage) {
+          const decryptText = document.getElementById("decryptText");
+          if (decryptText) decryptText.value = cleanText;
+        } else {
+          alert("Scanned Text:\n" + cleanText);
+        }
+      });
   }
 
   function stopCamera() {
     let stream = video.srcObject;
     if (stream) {
-      let tracks = stream.getTracks();
-      tracks.forEach(track => track.stop());
+      stream.getTracks().forEach(track => track.stop());
     }
     video.style.display = 'none';
   }
@@ -239,5 +240,6 @@ function startCamera() {
 
 </body>
 </html>
+
 
 
