@@ -98,7 +98,7 @@
   <div class="section">
     <h2>Encrypt Message</h2>
     <label for="encryptText">Text to Encrypt (Emojis Allowed):</label>
-    <input type="text" id="encryptInput" placeholder="e.g. HELLO 😄" />
+    <input type="text" id="encryptText" placeholder="e.g. HELLO 😄" />
     <label for="encryptKey">Key:</label>
     <input type="text" id="encryptKey" placeholder="e.g. NICE" />
     <button class="action" onclick="encrypt()">Encrypt</button>
@@ -111,7 +111,7 @@
   <div class="section">
     <h2>Decrypt Message</h2>
     <label for="decryptText">Text to Decrypt:</label>
-    <input type="text" id="decryptInput" placeholder="e.g. ZQPR 😄" />
+    <input type="text" id="decryptText" placeholder="e.g. ZQPR 😄" />
     <label for="decryptKey">Key:</label>
     <input type="text" id="decryptKey" placeholder="e.g. NICE" />
     <button class="action" onclick="decrypt()">Decrypt</button>
@@ -217,11 +217,11 @@
         const isDecryptPage = window.location.pathname.includes("decrypt") || document.title.includes("Decrypt");
 
         if (isEncryptPage) {
-          const encryptInput = document.getElementById("encryptInput");
-          if (encryptInput) encryptInput.value = cleanText;
+          const encryptText = document.getElementById("encryptText");
+          if (encryptText) encryptText.value = cleanText;
         } else if (isDecryptPage) {
-          const decryptInput = document.getElementById("decryptInput");
-          if (decryptInput) decryptInput.value = cleanText;
+          const decryptText = document.getElementById("decryptText");
+          if (decryptText) decryptText.value = cleanText;
         } else {
           alert("Scanned Text:\n" + cleanText);
         }
@@ -240,7 +240,5 @@
 
 </body>
 </html>
-
-
 
 
