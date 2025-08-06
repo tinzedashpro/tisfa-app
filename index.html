@@ -183,14 +183,26 @@
   let video = document.getElementById('video');
   let canvas = document.getElementById('canvas');
 
-  function startCamera() {
+function startCamera() {
+  navigator.mediaDevices.getUserMedia({
+    video: { facingMode: { exact: "environment" } } // force back camera
+  })
+  .then(stream => {
+    video.srcObject = stream;
+    video.style.display = 'block';
+  })
+  .catch(err => {
+    alert('Back camera not available. Trying default camera...');
+    // fallback to any available camera
     navigator.mediaDevices.getUserMedia({ video: true })
       .then(stream => {
         video.srcObject = stream;
         video.style.display = 'block';
       })
       .catch(err => alert('Camera error: ' + err));
-  }
+  });
+}
+
 
   function captureText() {
     canvas.width = video.videoWidth;
@@ -227,4 +239,5 @@
 
 </body>
 </html>
+
 
