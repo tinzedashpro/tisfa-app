@@ -82,6 +82,8 @@
       nav button { font-size: 14px; }
     }
   </style>
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.0.2/dist/tesseract.min.js"></script>
+
 </head>
 <body>
 
@@ -117,6 +119,14 @@
     <div class="result" id="decryptResult"></div>
   </div>
 </div>
+
+  <div>
+  <button onclick="startCamera()">📸 Scan Text</button>
+  <video id="video" width="100%" autoplay playsinline style="display:none;"></video>
+  <canvas id="canvas" style="display:none;"></canvas>
+  <button onclick="captureText()">📤 Capture & Scan</button>
+</div>
+
 
 <script>
   function showPage(id) {
@@ -169,5 +179,52 @@
   }
 </script>
 
+  <script>
+  let video = document.getElementById('video');
+  let canvas = document.getElementById('canvas');
+
+  function startCamera() {
+    navigator.mediaDevices.getUserMedia({ video: true })
+      .then(stream => {
+        video.srcObject = stream;
+        video.style.display = 'block';
+      })
+      .catch(err => alert('Camera error: ' + err));
+  }
+
+  function captureText() {
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    canvas.getContext('2d').drawImage(video, 0, 0);
+
+    Tesseract.recognize(
+      canvas,
+      'eng',
+      { logger: m => console.log(m) }
+    ).then(({ data: { text } }) => {
+      alert("Scanned Text:\n" + text.trim());
+      stopCamera();
+
+      // Auto-fill scanned text into encrypt or decrypt form
+      const encryptInput = document.getElementById('encryptInput');
+      const decryptInput = document.getElementById('decryptInput');
+
+      if (encryptInput) encryptInput.value = text.trim();
+      if (decryptInput) decryptInput.value = text.trim();
+    });
+  }
+
+  function stopCamera() {
+    let stream = video.srcObject;
+    if (stream) {
+      let tracks = stream.getTracks();
+      tracks.forEach(track => track.stop());
+    }
+    video.style.display = 'none';
+  }
+</script>
+
+
 </body>
 </html>
+
