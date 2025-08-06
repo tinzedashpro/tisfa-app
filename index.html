@@ -263,23 +263,22 @@
       });
   }
 
-  function captureText() {
+function captureText() {
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
     canvas.getContext('2d').drawImage(video, 0, 0);
 
     Tesseract.recognize(canvas, 'eng', { logger: m => console.log(m) })
       .then(({ data: { text } }) => {
-        const cleaned = text.trim();
+        const cleaned = text.trim().replace(/\s+/g, ' '); // clean extra spaces
         stopCamera();
 
-        // Smart autofill depending on page
-        if (document.getElementById('encryptInput')) {
-          document.getElementById('encryptInput').value = cleaned;
-        } else if (document.getElementById('decryptInput')) {
-          document.getElementById('decryptInput').value = cleaned;
+        // Fills the input field with id="encryptText"
+        const textInput = document.getElementById("encryptText");
+        if (textInput) {
+          textInput.value = cleaned;
         } else {
-          alert("Scanned text: " + cleaned);
+          alert("Scanned text:\n" + cleaned);
         }
       });
   }
@@ -296,6 +295,7 @@
 
 </body>
 </html>
+
 
 
 
